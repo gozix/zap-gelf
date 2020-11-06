@@ -3,8 +3,8 @@ package gelf
 import (
 	"os"
 
-	viperBundle "github.com/gozix/viper/v2"
-	zapBundle "github.com/gozix/zap/v2"
+	gzViper "github.com/gozix/viper/v2"
+	gzZap "github.com/gozix/zap/v2"
 
 	"github.com/sarulabs/di/v2"
 	gelf "github.com/snovichkov/zap-gelf"
@@ -14,9 +14,25 @@ import (
 // Bundle implements the glue.Bundle interface.
 type Bundle struct{}
 
+// BundleName is default definition name.
+const BundleName = "zap-gelf"
+
+// NewBundle create bundle instance.
+func NewBundle() *Bundle {
+	return new(Bundle)
+}
+
 // Name implements the glue.Bundle interface.
 func (*Bundle) Name() string {
-	return "zap-gelf"
+	return BundleName
+}
+
+// Name implements the glue.BundleDependsOn interface.
+func (b *Bundle) DependsOn() []string {
+	return []string{
+		gzZap.BundleName,
+		gzViper.BundleName,
+	}
 }
 
 // Build implements the glue.Bundle interface.
@@ -24,15 +40,15 @@ func (*Bundle) Build(builder *di.Builder) error {
 	return builder.Add(di.Def{
 		Name: "zap.core.gelf",
 		Tags: []di.Tag{{
-			Name: zapBundle.TagCoreFactory,
+			Name: gzZap.TagCoreFactory,
 			Args: map[string]string{
-				zapBundle.ArgCoreType: "gelf",
+				gzZap.ArgCoreType: "gelf",
 			},
 		}},
 		Build: func(ctn di.Container) (interface{}, error) {
 			return func(path string) (_ zapcore.Core, err error) {
-				var cfg *viperBundle.Viper
-				if err = ctn.Fill(viperBundle.BundleName, &cfg); err != nil {
+				var cfg *gzViper.Viper
+				if err = ctn.Fill(gzViper.BundleName, &cfg); err != nil {
 					return nil, err
 				}
 
